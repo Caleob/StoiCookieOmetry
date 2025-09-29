@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stoi-Cookie-ometry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f1f5f9; }
+        .hidden { display: none; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-primary { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .btn-secondary { background-color: white; color: #4338ca; border-color: #e0e7ff; }
+        .btn-secondary:hover { background-color: #f1f5f9; }
+        .btn-disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; border-color: #d1d5db; }
+        .feedback-correct { color: #16a34a; }
+        .feedback-incorrect { color: #dc2626; }
+        .input-field {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px #c7d2fe;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Header Banner -->
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-indigo-700">🍪 Stoi-Cookie-ometry</h1>
+            <div class="hidden sm:block text-center text-lg font-semibold px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 shadow-inner">
+                3 🍚 + 2 🧈 + 2 🍬 + 2 🥚 + 1 🥄 → 15 🍪
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto p-4 md:p-6">
+        <!-- Screen 1: Start Screen -->
+        <div id="start-screen" class="card p-6 md:p-8 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-2">Welcome to Stoi-Cookie-ometry!</h2>
+            <p class="text-slate-600 mb-6">Practice ratios, grosses, and masses with cookie chemistry. Enter your name to begin.</p>
+            <div class="max-w-sm mx-auto">
+                <input id="name" class="input-field text-center text-lg" placeholder="Your Name">
+                <p id="name-error" class="text-red-500 text-sm mt-1 h-5"></p>
+                <button id="start" class="btn btn-primary w-full mt-2 text-lg">Start Learning</button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Activity Selector -->
+        <div id="selector-screen" class="hidden">
+            <div class="card p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-1">Hello, <span id="student-name-display"></span>!</h2>
+                <p class="text-slate-600 mb-6">Choose your next activity. Complete all four to see your final report.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button data-act="ratio" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
+                        <span class="font-bold">Ratio Practice</span><span class="text-sm font-normal text-slate-500">Use recipe ratios</span>
+                    </button>
+                    <button data-act="g2i" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
+                        <span class="font-bold">Gross → Items</span><span class="text-sm font-normal text-slate-500">Convert grosses to units</span>
+                    </button>
+                    <button data-act="i2g" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
+                        <span class="font-bold">Items → Gross</span><span class="text-sm font-normal text-slate-500">Convert units to grosses</span>
+                    </button>
+                    <button data-act="m2m" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
+                        <span class="font-bold">Mass → Mass</span><span class="text-sm font-normal text-slate-500">Multi-step conversions</span>
+                    </button>
+                </div>
+                 <div id="final-report-cta" class="hidden mt-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
+                    <h3 class="font-bold text-green-800">All Activities Completed!</h3>
+                    <p class="text-green-700">Great job! You can now view your final proficiency report.</p>
+                    <button id="view-final-report" class="btn btn-primary mt-3 bg-green-600 hover:bg-green-700">View Final Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 3: Activity Screen -->
+        <div id="activity-screen" class="hidden">
+            <div class="card p-6 md:p-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="actTitle" class="text-2xl font-bold"></h2>
+                    <div class="text-sm font-semibold px-3 py-1 bg-slate-100 rounded-full">Question <span id="qIdx">1</span>/5</div>
+                </div>
+                <div id="questionArea" class="space-y-4"></div>
+                <div id="feedbackArea" class="mt-4 font-semibold text-lg min-h-[2.5rem]"></div>
+                <div class="mt-4 flex gap-4">
+                    <button id="submit" class="btn btn-primary">Submit Answer</button>
+                    <button id="next" class="btn btn-secondary hidden">Next Question</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 4: Results Screen -->
+        <div id="results-screen" class="hidden">
+            <div id="summary-card" class="card p-6 md-p-8">
+                <div id="summary"></div>
+                <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="download" class="btn btn-primary">Download Report</button>
+                    <button id="restart" class="btn btn-secondary">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Buttons -->
+    <div class="fixed bottom-4 right-4 z-20 flex flex-col gap-2">
+         <button id="equationBtn" class="btn btn-secondary text-sm shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span class="hidden md:inline">Equation Sheet</span>
+        </button>
+        <button id="tableBtn" class="btn btn-secondary text-sm shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h-8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8"/><path d="M18 14h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3H14"/><path d="M22 18h-2"/><path d="M18 20v-4"/><path d="M12 16H8"/><path d="m15 10-4-4"/><path d="m11 10 4-4"/></svg>
+            <span class="hidden md:inline">Periodic Table of Baking</span>
+        </button>
+    </div>
+
+    <!-- Modal for Equation Sheet -->
+    <div id="equation-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+        <div class="card max-w-lg w-full p-6 relative">
+            <button id="closeEquationModal" class="absolute top-3 right-3 text-slate-400 hover:text-slate-700">&times;</button>
+            <h3 class="text-xl font-bold mb-4">Conversion Equations</h3>
+            <div class="space-y-4 text-slate-700">
+                <div>
+                    <h4 class="font-semibold">Items & Grosses</h4>
+                    <p class="mt-1 p-2 bg-slate-50 rounded-md">Items = Grosses &times; (144 items / 1 gross)</p>
+                    <p class="mt-1 p-2 bg-slate-50 rounded-md">Grosses = Items &divide; (144 items / 1 gross)</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold">Weight & Grosses</h4>
+                    <p class="mt-1 p-2 bg-slate-50 rounded-md">Weight (lb) = Grosses &times; (Mass per Gross in lb / 1 gross)</p>
+                    <p class="mt-1 p-2 bg-slate-50 rounded-md">Grosses = Weight (lb) &divide; (Mass per Gross in lb / 1 gross)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Periodic Table -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+        <div class="card max-w-lg w-full p-6 relative">
+            <button id="closeModal" class="absolute top-3 right-3 text-slate-400 hover:text-slate-700">&times;</button>
+            <h3 class="text-xl font-bold mb-4">Periodic Table of Baking</h3>
+            <p class="text-sm text-slate-500 mb-4">Molar mass equivalents for our baking ingredients. (1 gross = 144 items)</p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="p-3 font-semibold">Ingredient</th>
+                            <th class="p-3 font-semibold text-center">Emoji</th>
+                            <th class="p-3 font-semibold">Mass per Gross (lb)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr><td class="p-3">Flour</td><td class="p-3 text-center">🍚</td><td class="p-3">38.2</td></tr>
+                        <tr><td class="p-3">Sugar</td><td class="p-3 text-center">🍬</td><td class="p-3">63.5</td></tr>
+                        <tr><td class="p-3">Baking Soda</td><td class="p-3 text-center">🥄</td><td class="p-3">1.45</td></tr>
+                        <tr><td class="p-3">Eggs</td><td class="p-3 text-center">🥚</td><td class="p-3">15.8</td></tr>
+                        <tr><td class="p-3">Butter</td><td class="p-3 text-center">🧈</td><td class="p-3">64.0</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script>
+(() => {
+    // --- CONSTANTS ---
+    const RECIPE = { flour: 3, butter: 2, sugar: 2, eggs: 2, soda: 1 };
+    const INGREDIENTS = Object.keys(RECIPE);
+    const MASS_INGREDIENTS = ['flour', 'sugar', 'soda', 'eggs', 'butter']; // Ingredients with mass
+    const GROSS_UNITS = 144;
+    const MASS_PER_GROSS = { flour: 38.2, sugar: 63.5, soda: 1.45, eggs: 15.8, butter: 64.0 };
+    const EMOJIS = { flour: '🍚', butter: '🧈', sugar: '🍬', eggs: '🥚', soda: '🥄', cookies: '🍪' };
+    const COOKIE_YIELD = 15;
+    const TOLERANCE = 0.03; // 3% tolerance for answers
+    const ACTIVITY_TITLES = { ratio: 'Ratio Practice', g2i: 'Gross → Items Conversion', i2g: 'Items → Gross Conversion', m2m: 'Mass → Mass Conversion' };
+
+    // --- STATE MANAGEMENT ---
+    const state = {
+        studentName: '',
+        currentActivity: null,
+        questionIndex: 0,
+        activityBank: [],
+        activityStartTime: 0,
+        questionStartTime: 0,
+        results: {
+            ratio: { scores: [], answers: [], times: [], totalTime: 0 },
+            g2i:   { scores: [], answers: [], times: [], totalTime: 0 },
+            i2g:   { scores: [], answers: [], times: [], totalTime: 0 },
+            m2m:   { scores: [], answers: [], times: [], totalTime: 0 },
+        },
+        completedActivities: new Set(),
+    };
+
+    // --- DOM ELEMENTS ---
+    const screens = {
+        start: document.getElementById('start-screen'),
+        selector: document.getElementById('selector-screen'),
+        activity: document.getElementById('activity-screen'),
+        results: document.getElementById('results-screen'),
+    };
+    const nameInput = document.getElementById('name');
+    const nameError = document.getElementById('name-error');
+    const studentNameDisplay = document.getElementById('student-name-display');
+    const actTitle = document.getElementById('actTitle');
+    const qIdx = document.getElementById('qIdx');
+    const questionArea = document.getElementById('questionArea');
+    const feedbackArea = document.getElementById('feedbackArea');
+    const modal = document.getElementById('modal');
+    const equationModal = document.getElementById('equation-modal');
+    const summaryDiv = document.getElementById('summary');
+    
+    // Buttons
+    const startBtn = document.getElementById('start');
+    const activityBtns = document.querySelectorAll('.activity-btn');
+    const submitBtn = document.getElementById('submit');
+    const nextBtn = document.getElementById('next');
+    const tableBtn = document.getElementById('tableBtn');
+    const closeModalBtn = document.getElementById('closeModal');
+    const equationBtn = document.getElementById('equationBtn');
+    const closeEquationModalBtn = document.getElementById('closeEquationModal');
+    const downloadBtn = document.getElementById('download');
+    const restartBtn = document.getElementById('restart');
+    const viewFinalReportBtn = document.getElementById('view-final-report');
+
+    // --- UTILITY FUNCTIONS ---
+    const showScreen = (screenName) => {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenName].classList.remove('hidden');
+    };
+
+    const getRandomElement = (arr, exclude = null) => {
+        let filteredArr = arr;
+        if (exclude) {
+            filteredArr = arr.filter(item => item !== exclude);
+        }
+        return filteredArr[Math.floor(Math.random() * filteredArr.length)];
+    };
+
+    const formatNumber = (num) => {
+        if (typeof num !== 'number' || isNaN(num)) return 'N/A';
+        if (Number.isInteger(num)) return num;
+        return parseFloat(num.toFixed(2));
+    };
+
+    const withinTolerance = (got, truth) => {
+        if (isNaN(got)) return false;
+        if (truth === 0) return Math.abs(got) < 1e-6;
+        return Math.abs((got - truth) / truth) <= TOLERANCE;
+    };
+
+    // --- QUESTION GENERATION ---
+    const generateBank = (act) => {
+        const bank = [];
+        for (let i = 0; i < 5; i++) {
+            if (act === 'ratio') {
+                const mult = Math.floor(Math.random() * 5) + 2;
+                if (i < 3) {
+                    const a = getRandomElement(INGREDIENTS);
+                    const b = getRandomElement(INGREDIENTS, a);
+                    bank.push({ prompt: `The recipe calls for ${RECIPE[a]} ${EMOJIS[a]} for every ${RECIPE[b]} ${EMOJIS[b]}. If you use <strong>${RECIPE[a] * mult} ${EMOJIS[a]}</strong>, how many ${EMOJIS[b]} are needed?`, answer: RECIPE[b] * mult });
+                } else {
+                    const ingredient = getRandomElement(INGREDIENTS);
+                    if (Math.random() > 0.5) {
+                        bank.push({ prompt: `The recipe yields ${COOKIE_YIELD} ${EMOJIS['cookies']} for every ${RECIPE[ingredient]} ${EMOJIS[ingredient]}. If you use <strong>${RECIPE[ingredient] * mult} ${EMOJIS[ingredient]}</strong>, how many ${EMOJIS['cookies']} can you make?`, answer: COOKIE_YIELD * mult });
+                    } else {
+                        bank.push({ prompt: `The recipe yields ${COOKIE_YIELD} ${EMOJIS['cookies']} for every ${RECIPE[ingredient]} ${EMOJIS[ingredient]}. If you want to make <strong>${COOKIE_YIELD * mult} ${EMOJIS['cookies']}</strong>, how many ${EMOJIS[ingredient]} are needed?`, answer: RECIPE[ingredient] * mult });
+                    }
+                }
+            } else if (act === 'g2i') {
+                const grosses = (Math.floor(Math.random() * 10) + 2) * 0.25;
+                bank.push({ prompt: `A batch contains <strong>${grosses} gross</strong> of ${EMOJIS[getRandomElement(INGREDIENTS)]}. How many individual items is that?`, answer: grosses * GROSS_UNITS });
+            } else if (act === 'i2g') {
+                const n = (Math.floor(Math.random() * 8) + 2) * 12;
+                bank.push({ prompt: `You count <strong>${n} individual ${EMOJIS[getRandomElement(INGREDIENTS)]}</strong>. How many gross is that?`, answer: n / GROSS_UNITS });
+            } else if (act === 'm2m') {
+                const from = getRandomElement(MASS_INGREDIENTS), to = getRandomElement(MASS_INGREDIENTS, from);
+                const grossesFrom = (Math.floor(Math.random() * 8) + 2) * 0.25;
+                const massFrom = grossesFrom * MASS_PER_GROSS[from], grossesTo = grossesFrom * (RECIPE[to] / RECIPE[from]), massTo = grossesTo * MASS_PER_GROSS[to];
+                bank.push({
+                    prompt: `If you start with <strong>${formatNumber(massFrom)} lb</strong> of ${EMOJIS[from]}, how many pounds of ${EMOJIS[to]} are required?`,
+                    steps: [
+                        { label: `First, convert mass of ${EMOJIS[from]} to gross:`, answer: grossesFrom },
+                        { label: `Then, use the ratio (${RECIPE[to]} ${EMOJIS[to]} / ${RECIPE[from]} ${EMOJIS[from]}) to find gross of ${EMOJIS[to]}:`, answer: grossesTo },
+                        { label: `Finally, convert gross of ${EMOJIS[to]} to mass (lb):`, answer: massTo },
+                    ]
+                });
+            }
+        }
+        return bank;
+    };
+
+    // --- UI RENDERING ---
+    const renderQuestion = () => {
+        state.questionStartTime = Date.now();
+        const q = state.activityBank[state.questionIndex];
+        qIdx.textContent = state.questionIndex + 1;
+        
+        if (state.currentActivity === 'm2m') {
+            state.results.m2m.scores[state.questionIndex] = [null, null, null];
+            const stepsHtml = q.steps.map((step, index) => `
+                <div class="p-4 border rounded-lg ${index > 0 ? 'opacity-50' : ''}" id="container-step-${index}">
+                    <label for="step-${index}" class="block font-medium text-slate-700">${index + 1}. ${step.label}</label>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="number" id="step-${index}" class="m2m-input input-field flex-grow" placeholder="Your answer" ${index > 0 ? 'disabled' : ''}>
+                        <button id="submit-step-${index}" class="btn btn-primary text-sm" ${index > 0 ? 'disabled' : ''}>Submit</button>
+                    </div>
+                    <div id="feedback-step-${index}" class="mt-2 font-semibold min-h-[1.5rem]"></div>
+                </div>
+            `).join('');
+            questionArea.innerHTML = `<p class="text-lg mb-4">${q.prompt}</p>` + stepsHtml;
+            q.steps.forEach((_, index) => {
+                const btn = document.getElementById(`submit-step-${index}`), input = document.getElementById(`step-${index}`);
+                btn.addEventListener('click', () => gradeM2mStep(index));
+                input.addEventListener('keyup', (e) => { if(e.key === 'Enter') gradeM2mStep(index); });
+            });
+            submitBtn.classList.add('hidden');
+        } else {
+            questionArea.innerHTML = `<p class="text-lg">${q.prompt}</p><input type="number" id="answer" class="input-field mt-2" placeholder="Your answer">`;
+            submitBtn.classList.remove('hidden');
+        }
+        feedbackArea.innerHTML = '';
+        nextBtn.classList.add('hidden');
+    };
+    
+    const updateSelectorUI = () => {
+        activityBtns.forEach(btn => {
+            const actId = btn.dataset.act;
+            if (state.completedActivities.has(actId)) {
+                btn.classList.add('btn-disabled');
+                btn.disabled = true;
+                btn.querySelector('span.font-bold').insertAdjacentHTML('afterend', `<span class="text-green-600 ml-auto font-bold">✔️ Done</span>`);
+            }
+        });
+        if (state.completedActivities.size === activityBtns.length) {
+            document.getElementById('final-report-cta').classList.remove('hidden');
+        }
+    };
+    
+    const showFinalReport = () => {
+        let grandTotalPoints = 0;
+        let reportHtml = `
+            <div class="p-6 bg-slate-50 rounded-lg text-center">
+                <h3 class="font-bold text-2xl mb-2 text-indigo-700">Final Report for ${state.studentName}</h3>
+                <p id="total-score-display" class="font-bold text-3xl"></p>
+            </div>
+            <div class="space-y-6 mt-6">
+        `;
+
+        ['ratio', 'g2i', 'i2g'].forEach(actId => {
+            const result = state.results[actId];
+            const points = result.scores.filter(Boolean).length;
+            grandTotalPoints += points;
+            reportHtml += `
+                <div class="p-4 border rounded-lg">
+                    <h4 class="font-semibold text-xl mb-2">${ACTIVITY_TITLES[actId]}</h4>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <span class="font-medium text-slate-600">Points:</span> <strong>${points}</strong>
+                        <span class="font-medium text-slate-600">Total Time:</span> <strong>${formatNumber(result.totalTime)}s</strong>
+                    </div>
+                    <details class="mt-2 text-sm"><summary class="cursor-pointer font-medium text-indigo-600">Show question times</summary><ul class="list-disc pl-5 mt-1">
+                        ${result.times.map((t, i) => `<li>Question ${i + 1}: ${formatNumber(t)}s</li>`).join('') || '<li>No times recorded.</li>'}
+                    </ul></details>
+                </div>
+            `;
+        });
+
+        const m2mResult = state.results.m2m;
+        const m2mCorrectSteps = m2mResult.scores.flat().filter(Boolean).length;
+        const m2mPoints = m2mCorrectSteps;
+        grandTotalPoints += m2mPoints;
+        
+        reportHtml += `
+            <div class="p-4 border rounded-lg">
+                <h4 class="font-semibold text-xl mb-2">${ACTIVITY_TITLES['m2m']}</h4>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <span class="font-medium text-slate-600">Correct Steps:</span> <strong>${m2mCorrectSteps} / 15</strong>
+                    <span class="font-medium text-slate-600">Points:</span> <strong>${m2mPoints}</strong>
+                    <span class="font-medium text-slate-600 col-span-2">Total Time:</span> <strong class="col-span-2">${formatNumber(m2mResult.totalTime)}s</strong>
+                </div>
+                <details class="mt-2 text-sm"><summary class="cursor-pointer font-medium text-indigo-600">Show question times</summary><ul class="list-disc pl-5 mt-1">
+                    ${m2mResult.times.map((t, i) => `<li>Question ${i + 1}: ${formatNumber(t)}s</li>`).join('') || '<li>No times recorded.</li>'}
+                </ul></details>
+            </div>
+        `;
+
+        reportHtml += `</div>`;
+        summaryDiv.innerHTML = reportHtml;
+        document.getElementById('total-score-display').textContent = `Total Score: ${grandTotalPoints} / 30 Points`;
+        showScreen('results');
+    };
+
+    // --- EVENT HANDLERS & LOGIC ---
+    const handleStart = () => {
+        const name = nameInput.value.trim();
+        if (!name) { nameError.textContent = 'Please enter your name.'; return; }
+        nameError.textContent = '';
+        state.studentName = name;
+        studentNameDisplay.textContent = name;
+        showScreen('selector');
+    };
+    
+    const startActivity = (actId) => {
+        state.currentActivity = actId;
+        state.questionIndex = 0;
+        state.activityBank = generateBank(actId);
+        state.activityStartTime = Date.now();
+        actTitle.textContent = ACTIVITY_TITLES[actId];
+        renderQuestion();
+        showScreen('activity');
+    };
+
+    const gradeAnswer = () => {
+        if (state.currentActivity === 'm2m') return;
+        const timeTaken = (Date.now() - state.questionStartTime) / 1000;
+        state.results[state.currentActivity].times[state.questionIndex] = timeTaken;
+        
+        const q = state.activityBank[state.questionIndex];
+        const userAnswer = parseFloat(document.getElementById('answer').value);
+        const isCorrect = withinTolerance(userAnswer, q.answer);
+        
+        feedbackArea.textContent = isCorrect ? `Correct! The answer is ${formatNumber(q.answer)}.` : `Not quite. The correct answer was ${formatNumber(q.answer)}.`;
+        feedbackArea.className = `mt-4 font-semibold text-lg min-h-[2.5rem] ${isCorrect ? 'feedback-correct' : 'feedback-incorrect'}`;
+        state.results[state.currentActivity].scores[state.questionIndex] = isCorrect;
+        
+        document.querySelector('#activity-screen input').disabled = true;
+        submitBtn.classList.add('hidden');
+        nextBtn.classList.remove('hidden');
+        nextBtn.textContent = (state.questionIndex === 4) ? 'Finish Activity' : 'Next Question';
+    };
+    
+    const gradeM2mStep = (index) => {
+        const input = document.getElementById(`step-${index}`);
+        if(input.disabled) return;
+
+        const q = state.activityBank[state.questionIndex];
+        const userAnswer = parseFloat(input.value);
+        const isStepCorrect = withinTolerance(userAnswer, q.steps[index].answer);
+        state.results.m2m.scores[state.questionIndex][index] = isStepCorrect;
+
+        const feedbackEl = document.getElementById(`feedback-step-${index}`);
+        feedbackEl.textContent = isStepCorrect ? `Correct! Answer: ${formatNumber(q.steps[index].answer)}` : `Incorrect. Correct answer: ${formatNumber(q.steps[index].answer)}`;
+        feedbackEl.className = `mt-2 font-semibold min-h-[1.5rem] ${isStepCorrect ? 'text-green-600' : 'text-red-600'}`;
+
+        input.disabled = true;
+        document.getElementById(`submit-step-${index}`).disabled = true;
+
+        if (index < 2) {
+            const nextIndex = index + 1;
+            document.getElementById(`container-step-${nextIndex}`).classList.remove('opacity-50');
+            document.getElementById(`step-${nextIndex}`).disabled = false;
+            document.getElementById(`submit-step-${nextIndex}`).disabled = false;
+            document.getElementById(`step-${nextIndex}`).focus();
+        } else {
+            const timeTaken = (Date.now() - state.questionStartTime) / 1000;
+            state.results.m2m.times[state.questionIndex] = timeTaken;
+            nextBtn.classList.remove('hidden');
+            nextBtn.textContent = (state.questionIndex === 4) ? 'Finish Activity' : 'Next Question';
+        }
+    };
+
+    const handleNext = () => {
+        if (state.questionIndex < 4) {
+            state.questionIndex++;
+            renderQuestion();
+        } else {
+            state.completedActivities.add(state.currentActivity);
+            const totalTime = (Date.now() - state.activityStartTime) / 1000;
+            state.results[state.currentActivity].totalTime = totalTime;
+            updateSelectorUI();
+            showScreen('selector');
+        }
+    };
+
+    const buildReport = () => {
+        let report = `Stoi-Cookie-ometry Report for ${state.studentName}\nCompleted: ${new Date().toLocaleString()}\n\n`;
+        let grandTotalPoints = 0;
+
+        ['ratio', 'g2i', 'i2g'].forEach(actId => {
+            const result = state.results[actId];
+            const points = result.scores.filter(Boolean).length;
+            grandTotalPoints += points;
+            report += `--- ${ACTIVITY_TITLES[actId]} ---\n`;
+            report += `Points: ${points}\n`;
+            report += `Total Time: ${formatNumber(result.totalTime)}s\n`;
+            result.times.forEach((t, i) => { report += `  Q${i + 1}: ${formatNumber(t)}s\n`; });
+            report += "\n";
+        });
+
+        const m2mResult = state.results.m2m;
+        const m2mPoints = m2mResult.scores.flat().filter(Boolean).length;
+        grandTotalPoints += m2mPoints;
+
+        report += `--- ${ACTIVITY_TITLES['m2m']} ---\n`;
+        report += `Correct Steps: ${m2mPoints} / 15\n`;
+        report += `Points: ${m2mPoints}\n`;
+        report += `Total Time: ${formatNumber(m2mResult.totalTime)}s\n`;
+        m2mResult.times.forEach((t, i) => { report += `  Q${i + 1}: ${formatNumber(t)}s\n`; });
+        report += "\n";
+
+        report += `=== FINAL SCORE: ${grandTotalPoints} / 30 ===\n`;
+        return report;
+    };
+    
+    const downloadReport = () => {
+        const text = buildReport();
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${state.studentName.replace(/\s/g, '_')}_stoi-cookie-report.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // --- EVENT LISTENERS ---
+    startBtn.addEventListener('click', handleStart);
+    nameInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleStart(); });
+    activityBtns.forEach(btn => btn.addEventListener('click', () => startActivity(btn.dataset.act)));
+    submitBtn.addEventListener('click', gradeAnswer);
+    nextBtn.addEventListener('click', handleNext);
+    tableBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+    equationBtn.addEventListener('click', () => equationModal.classList.remove('hidden'));
+    closeEquationModalBtn.addEventListener('click', () => equationModal.classList.add('hidden'));
+    equationModal.addEventListener('click', (e) => { if (e.target === equationModal) equationModal.classList.add('hidden'); });
+    viewFinalReportBtn.addEventListener('click', showFinalReport);
+    downloadBtn.addEventListener('click', downloadReport);
+    restartBtn.addEventListener('click', () => location.reload());
+
+    // --- INITIALIZATION ---
+    showScreen('start');
+
+})();
+</script>
+</body>
+</html>
+
+
