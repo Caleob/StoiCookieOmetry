@@ -66,6 +66,15 @@
             <div class="max-w-sm mx-auto">
                 <input id="name" class="input-field text-center text-lg" placeholder="Your Name">
                 <p id="name-error" class="text-red-500 text-sm mt-1 h-5"></p>
+                <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-left">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="paper-acknowledgement" class="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <span class="text-sm text-slate-700">
+                            <strong>I acknowledge</strong> that scratchwork ON PAPER is required for all work done in this activity and must be turned in along with the downloaded report to receive credit.
+                        </span>
+                    </label>
+                </div>
+                <p id="paper-error" class="text-red-500 text-sm mt-1 h-5"></p>
                 <button id="start" class="btn btn-primary w-full mt-2 text-lg">Start Learning</button>
             </div>
         </div>
@@ -79,11 +88,11 @@
                     <button data-act="ratio" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
                         <span class="font-bold">Ratio Practice</span><span class="text-sm font-normal text-slate-500">Use recipe ratios</span>
                     </button>
-                    <button data-act="g2i" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
-                        <span class="font-bold">Gross → Items</span><span class="text-sm font-normal text-slate-500">Convert grosses to units</span>
+                    <button data-act="ig" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
+                        <span class="font-bold">Items ↔ Gross</span><span class="text-sm font-normal text-slate-500">Convert between units & grosses</span>
                     </button>
-                    <button data-act="i2g" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
-                        <span class="font-bold">Items → Gross</span><span class="text-sm font-normal text-slate-500">Convert units to grosses</span>
+                    <button data-act="mg" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
+                        <span class="font-bold">Mass ↔ Gross</span><span class="text-sm font-normal text-slate-500">Convert between mass & grosses</span>
                     </button>
                     <button data-act="m2m" class="activity-btn btn btn-secondary h-24 text-lg justify-start p-4 flex-col items-start">
                         <span class="font-bold">Mass → Mass</span><span class="text-sm font-normal text-slate-500">Multi-step conversions</span>
@@ -185,17 +194,20 @@
     </div>
 
 <script>
-(() => {
+console.log('At least this sould log');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Script starting...');
+
     // --- CONSTANTS ---
     const RECIPE = { flour: 3, butter: 2, sugar: 2, eggs: 2, soda: 1 };
     const INGREDIENTS = Object.keys(RECIPE);
-    const MASS_INGREDIENTS = ['flour', 'sugar', 'soda', 'eggs', 'butter']; // Ingredients with mass
+    const MASS_INGREDIENTS = ['flour', 'sugar', 'soda', 'eggs', 'butter'];
     const GROSS_UNITS = 144;
     const MASS_PER_GROSS = { flour: 38.2, sugar: 63.5, soda: 1.45, eggs: 15.8, butter: 64.0 };
     const EMOJIS = { flour: '🍚', butter: '🧈', sugar: '🍬', eggs: '🥚', soda: '🥄', cookies: '🍪' };
     const COOKIE_YIELD = 15;
-    const TOLERANCE = 0.03; // 3% tolerance for answers
-    const ACTIVITY_TITLES = { ratio: 'Ratio Practice', g2i: 'Gross → Items Conversion', i2g: 'Items → Gross Conversion', m2m: 'Mass → Mass Conversion' };
+    const TOLERANCE = 0.03;
+    const ACTIVITY_TITLES = { ratio: 'Ratio Practice', ig: 'Items ↔ Gross Conversion', mg: 'Mass ↔ Gross Conversion', m2m: 'Mass → Mass Conversion' };
 
     // --- STATE MANAGEMENT ---
     const state = {
@@ -207,48 +219,29 @@
         questionStartTime: 0,
         results: {
             ratio: { scores: [], answers: [], times: [], totalTime: 0 },
-            g2i:   { scores: [], answers: [], times: [], totalTime: 0 },
-            i2g:   { scores: [], answers: [], times: [], totalTime: 0 },
+            ig:   { scores: [], answers: [], times: [], totalTime: 0 },
+            mg:   { scores: [], answers: [], times: [], totalTime: 0 },
             m2m:   { scores: [], answers: [], times: [], totalTime: 0 },
         },
         completedActivities: new Set(),
     };
 
-    // --- DOM ELEMENTS ---
-    const screens = {
-        start: document.getElementById('start-screen'),
-        selector: document.getElementById('selector-screen'),
-        activity: document.getElementById('activity-screen'),
-        results: document.getElementById('results-screen'),
-    };
-    const nameInput = document.getElementById('name');
-    const nameError = document.getElementById('name-error');
-    const studentNameDisplay = document.getElementById('student-name-display');
-    const actTitle = document.getElementById('actTitle');
-    const qIdx = document.getElementById('qIdx');
-    const questionArea = document.getElementById('questionArea');
-    const feedbackArea = document.getElementById('feedbackArea');
-    const modal = document.getElementById('modal');
-    const equationModal = document.getElementById('equation-modal');
-    const summaryDiv = document.getElementById('summary');
-    
-    // Buttons
-    const startBtn = document.getElementById('start');
-    const activityBtns = document.querySelectorAll('.activity-btn');
-    const submitBtn = document.getElementById('submit');
-    const nextBtn = document.getElementById('next');
-    const tableBtn = document.getElementById('tableBtn');
-    const closeModalBtn = document.getElementById('closeModal');
-    const equationBtn = document.getElementById('equationBtn');
-    const closeEquationModalBtn = document.getElementById('closeEquationModal');
-    const downloadBtn = document.getElementById('download');
-    const restartBtn = document.getElementById('restart');
-    const viewFinalReportBtn = document.getElementById('view-final-report');
-
     // --- UTILITY FUNCTIONS ---
     const showScreen = (screenName) => {
-        Object.values(screens).forEach(s => s.classList.add('hidden'));
-        screens[screenName].classList.remove('hidden');
+        const screens = {
+            start: document.getElementById('start-screen'),
+            selector: document.getElementById('selector-screen'),
+            activity: document.getElementById('activity-screen'),
+            results: document.getElementById('results-screen'),
+        };
+        Object.values(screens).forEach(s => {
+            if (s) s.classList.add('hidden');
+        });
+        if (screens[screenName]) {
+            screens[screenName].classList.remove('hidden');
+        } else {
+            console.error('Screen not found:', screenName);
+        }
     };
 
     const getRandomElement = (arr, exclude = null) => {
@@ -289,12 +282,25 @@
                         bank.push({ prompt: `The recipe yields ${COOKIE_YIELD} ${EMOJIS['cookies']} for every ${RECIPE[ingredient]} ${EMOJIS[ingredient]}. If you want to make <strong>${COOKIE_YIELD * mult} ${EMOJIS['cookies']}</strong>, how many ${EMOJIS[ingredient]} are needed?`, answer: RECIPE[ingredient] * mult });
                     }
                 }
-            } else if (act === 'g2i') {
-                const grosses = (Math.floor(Math.random() * 10) + 2) * 0.25;
-                bank.push({ prompt: `A batch contains <strong>${grosses} gross</strong> of ${EMOJIS[getRandomElement(INGREDIENTS)]}. How many individual items is that?`, answer: grosses * GROSS_UNITS });
-            } else if (act === 'i2g') {
-                const n = (Math.floor(Math.random() * 8) + 2) * 12;
-                bank.push({ prompt: `You count <strong>${n} individual ${EMOJIS[getRandomElement(INGREDIENTS)]}</strong>. How many gross is that?`, answer: n / GROSS_UNITS });
+            } else if (act === 'ig') {
+                if (Math.random() > 0.5) {
+                    const grosses = (Math.floor(Math.random() * 10) + 2) * 0.25;
+                    bank.push({ prompt: `A batch contains <strong>${grosses} gross</strong> of ${EMOJIS[getRandomElement(INGREDIENTS)]}. How many individual items is that?`, answer: grosses * GROSS_UNITS });
+                } else {
+                    const n = (Math.floor(Math.random() * 8) + 2) * 12;
+                    bank.push({ prompt: `You count <strong>${n} individual ${EMOJIS[getRandomElement(INGREDIENTS)]}</strong>. How many gross is that?`, answer: n / GROSS_UNITS });
+                }
+            } else if (act === 'mg') {
+                const ingredient = getRandomElement(MASS_INGREDIENTS);
+                if (Math.random() > 0.5) {
+                    const mass = (Math.floor(Math.random() * 8) + 2) * 10;
+                    const grosses = mass / MASS_PER_GROSS[ingredient];
+                    bank.push({ prompt: `You have <strong>${mass} lb</strong> of ${EMOJIS[ingredient]}. How many gross is that?`, answer: grosses });
+                } else {
+                    const grosses = (Math.floor(Math.random() * 10) + 2) * 0.25;
+                    const mass = grosses * MASS_PER_GROSS[ingredient];
+                    bank.push({ prompt: `You have <strong>${grosses} gross</strong> of ${EMOJIS[ingredient]}. How many pounds is that?`, answer: mass });
+                }
             } else if (act === 'm2m') {
                 const from = getRandomElement(MASS_INGREDIENTS), to = getRandomElement(MASS_INGREDIENTS, from);
                 const grossesFrom = (Math.floor(Math.random() * 8) + 2) * 0.25;
@@ -314,6 +320,12 @@
 
     // --- UI RENDERING ---
     const renderQuestion = () => {
+        const qIdx = document.getElementById('qIdx');
+        const questionArea = document.getElementById('questionArea');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const submitBtn = document.getElementById('submit');
+        const nextBtn = document.getElementById('next');
+        
         state.questionStartTime = Date.now();
         const q = state.activityBank[state.questionIndex];
         qIdx.textContent = state.questionIndex + 1;
@@ -343,15 +355,20 @@
         }
         feedbackArea.innerHTML = '';
         nextBtn.classList.add('hidden');
+        const firstInput = questionArea.querySelector('input');
+        if (firstInput) firstInput.focus();
     };
     
     const updateSelectorUI = () => {
+        const activityBtns = document.querySelectorAll('.activity-btn');
         activityBtns.forEach(btn => {
             const actId = btn.dataset.act;
             if (state.completedActivities.has(actId)) {
                 btn.classList.add('btn-disabled');
                 btn.disabled = true;
-                btn.querySelector('span.font-bold').insertAdjacentHTML('afterend', `<span class="text-green-600 ml-auto font-bold">✔️ Done</span>`);
+                if (!btn.querySelector('.text-green-600')) {
+                    btn.querySelector('span.font-bold').insertAdjacentHTML('afterend', `<span class="text-green-600 ml-auto font-bold">✔️ Done</span>`);
+                }
             }
         });
         if (state.completedActivities.size === activityBtns.length) {
@@ -360,6 +377,7 @@
     };
     
     const showFinalReport = () => {
+        const summaryDiv = document.getElementById('summary');
         let grandTotalPoints = 0;
         let reportHtml = `
             <div class="p-6 bg-slate-50 rounded-lg text-center">
@@ -369,7 +387,7 @@
             <div class="space-y-6 mt-6">
         `;
 
-        ['ratio', 'g2i', 'i2g'].forEach(actId => {
+        ['ratio', 'ig', 'mg'].forEach(actId => {
             const result = state.results[actId];
             const points = result.scores.filter(Boolean).length;
             grandTotalPoints += points;
@@ -414,15 +432,42 @@
 
     // --- EVENT HANDLERS & LOGIC ---
     const handleStart = () => {
+        const nameInput = document.getElementById('name');
+        const nameError = document.getElementById('name-error');
+        const paperAcknowledgement = document.getElementById('paper-acknowledgement');
+        const paperError = document.getElementById('paper-error');
+        const studentNameDisplay = document.getElementById('student-name-display');
         const name = nameInput.value.trim();
-        if (!name) { nameError.textContent = 'Please enter your name.'; return; }
+        let isValid = true;
+
+        // Reset errors before validation
         nameError.textContent = '';
+        paperError.textContent = '';
+
+        // Validate name
+        if (!name) {
+            nameError.textContent = 'Please enter your name.';
+            isValid = false;
+        }
+
+        // Validate acknowledgement
+        if (!paperAcknowledgement.checked) {
+            paperError.textContent = 'You must acknowledge the paper scratchwork requirement.';
+            isValid = false;
+        }
+
+        if (!isValid) {
+            return; // Stop if validation fails
+        }
+
+        // If validation passes, proceed to the next screen
         state.studentName = name;
         studentNameDisplay.textContent = name;
         showScreen('selector');
     };
     
     const startActivity = (actId) => {
+        const actTitle = document.getElementById('actTitle');
         state.currentActivity = actId;
         state.questionIndex = 0;
         state.activityBank = generateBank(actId);
@@ -433,6 +478,10 @@
     };
 
     const gradeAnswer = () => {
+        const feedbackArea = document.getElementById('feedbackArea');
+        const submitBtn = document.getElementById('submit');
+        const nextBtn = document.getElementById('next');
+        
         if (state.currentActivity === 'm2m') return;
         const timeTaken = (Date.now() - state.questionStartTime) / 1000;
         state.results[state.currentActivity].times[state.questionIndex] = timeTaken;
@@ -449,9 +498,11 @@
         submitBtn.classList.add('hidden');
         nextBtn.classList.remove('hidden');
         nextBtn.textContent = (state.questionIndex === 4) ? 'Finish Activity' : 'Next Question';
+        nextBtn.focus();
     };
     
     const gradeM2mStep = (index) => {
+        const nextBtn = document.getElementById('next');
         const input = document.getElementById(`step-${index}`);
         if(input.disabled) return;
 
@@ -478,6 +529,7 @@
             state.results.m2m.times[state.questionIndex] = timeTaken;
             nextBtn.classList.remove('hidden');
             nextBtn.textContent = (state.questionIndex === 4) ? 'Finish Activity' : 'Next Question';
+            nextBtn.focus();
         }
     };
 
@@ -498,7 +550,7 @@
         let report = `Stoi-Cookie-ometry Report for ${state.studentName}\nCompleted: ${new Date().toLocaleString()}\n\n`;
         let grandTotalPoints = 0;
 
-        ['ratio', 'g2i', 'i2g'].forEach(actId => {
+        ['ratio', 'ig', 'mg'].forEach(actId => {
             const result = state.results[actId];
             const points = result.scores.filter(Boolean).length;
             grandTotalPoints += points;
@@ -535,30 +587,35 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        alert('REMINDER: Please turn in this downloaded report AND all paper scratchwork to your instructor to receive credit for this assignment.');
     };
 
     // --- EVENT LISTENERS ---
-    startBtn.addEventListener('click', handleStart);
-    nameInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleStart(); });
-    activityBtns.forEach(btn => btn.addEventListener('click', () => startActivity(btn.dataset.act)));
-    submitBtn.addEventListener('click', gradeAnswer);
-    nextBtn.addEventListener('click', handleNext);
-    tableBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
-    equationBtn.addEventListener('click', () => equationModal.classList.remove('hidden'));
-    closeEquationModalBtn.addEventListener('click', () => equationModal.classList.add('hidden'));
-    equationModal.addEventListener('click', (e) => { if (e.target === equationModal) equationModal.classList.add('hidden'); });
-    viewFinalReportBtn.addEventListener('click', showFinalReport);
-    downloadBtn.addEventListener('click', downloadReport);
-    restartBtn.addEventListener('click', () => location.reload());
+    console.log('Setting up event listeners...');
+    document.getElementById('start').addEventListener('click', handleStart);
+    document.getElementById('name').addEventListener('keyup', (e) => { 
+        if (e.key === 'Enter') handleStart(); 
+    });
+    document.querySelectorAll('.activity-btn').forEach(btn => btn.addEventListener('click', () => startActivity(btn.dataset.act)));
+    document.getElementById('submit').addEventListener('click', gradeAnswer);
+    document.getElementById('next').addEventListener('click', handleNext);
+    document.getElementById('tableBtn').addEventListener('click', () => document.getElementById('modal').classList.remove('hidden'));
+    document.getElementById('closeModal').addEventListener('click', () => document.getElementById('modal').classList.add('hidden'));
+    document.getElementById('modal').addEventListener('click', (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.add('hidden'); });
+    document.getElementById('equationBtn').addEventListener('click', () => document.getElementById('equation-modal').classList.remove('hidden'));
+    document.getElementById('closeEquationModal').addEventListener('click', () => document.getElementById('equation-modal').classList.add('hidden'));
+    document.getElementById('equation-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('equation-modal')) document.getElementById('equation-modal').classList.add('hidden'); });
+    document.getElementById('view-final-report').addEventListener('click', showFinalReport);
+    document.getElementById('download').addEventListener('click', downloadReport);
+    document.getElementById('restart').addEventListener('click', () => location.reload());
 
     // --- INITIALIZATION ---
+    console.log('Initialization complete, showing start screen');
     showScreen('start');
-
-})();
+});
 </script>
 </body>
 </html>
+
 
 
